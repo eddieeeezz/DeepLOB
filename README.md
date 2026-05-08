@@ -2,34 +2,38 @@
 
 This project implements and evaluates a stabilized DeepLOB-style neural network for limit order book prediction. It includes training notebooks for three datasets and a separate evaluation notebook that reloads saved checkpoints and reproduces test-set metrics.
 
+**Architecture & data flow (diagram + script map):** **[ARCHITECTURE.md](ARCHITECTURE.md)**  
+**Raw CSV → parquet:** **[DeepLOB_data_process/README.md](DeepLOB_data_process/README.md)**
+
 ## Project Structure
 
 ```text
 DeepLOB/
-|-- DeepLOB_training_stablized_final.ipynb
-|-- DeepLOB_training_stablized_final_k10.ipynb
-|-- DeepLOB_training_stablized_final_k50.ipynb
+|-- ARCHITECTURE.md              # pipeline diagram + responsibilities
+|-- README.md                    # this file
+|-- .gitignore                   # ignores large regenerated artifacts
+|-- flow_process/                # canonical training notebooks (base / k10 / k50)
+|-- DeepLOB_data_process/          # ETL only: raw_data + prepare_* + export_* (see its README)
 |-- DeepLOB_evaluate_trained_models.ipynb
-|-- deeplob_eval/
-|   |-- __init__.py
-|   |-- data.py
-|   |-- evaluation.py
-|   `-- model.py
-|-- Output_models/
-|   |-- deeplob5_stabilized_best.pth
-|   |-- deeplob5_stabilized_best_10.pth
-|   `-- deeplob5_stabilized_best_50.pth
-|-- test_Xy.parquet
+|-- generate_predictions.py      # inference → predictions parquet
+|-- backtest_signals.py          # signals + LOB execution stub / metrics
+|-- deeplob_eval/                # shared model / eval package for notebooks
+|-- Output_models/               # best .pth checkpoints
+|-- test_Xy.parquet              # evaluation datasets (often git-ignored if large)
 |-- test_10.parquet
 `-- test_50.parquet
 ```
 
+## Data processing (`DeepLOB_data_process/`)
+
+LOB snapshots live in **`DeepLOB_data_process/raw_data/`**. Scripts merge, label, and export slim parquets for the root **`test_*.parquet`** files. Large intermediates are regenerated locally and listed in **`.gitignore`** — see **`DeepLOB_data_process/README.md`** and **`ARCHITECTURE.md`**.
+
 ## Notebooks
 
-- `DeepLOB_training_stablized_final.ipynb`: training workflow for the base dataset.
-- `DeepLOB_training_stablized_final_k10.ipynb`: training workflow using `test_10.parquet`.
-- `DeepLOB_training_stablized_final_k50.ipynb`: training workflow using `test_50.parquet`.
-- `DeepLOB_evaluate_trained_models.ipynb`: loads the three trained checkpoints and evaluates each model on its matching test split.
+- `flow_process/DeepLOB_training_stablized_final.ipynb`: training workflow for the base dataset.
+- `flow_process/DeepLOB_training_stablized_final_k10.ipynb`: training workflow using `test_10.parquet`.
+- `flow_process/DeepLOB_training_stablized_final_k50.ipynb`: training workflow using `test_50.parquet`.
+- `DeepLOB_evaluate_trained_models.ipynb`: loads the three saved checkpoints and evaluates each model on its matching test split.
 
 The evaluation notebook is split into three sections:
 
@@ -70,7 +74,7 @@ The training and evaluation notebooks use the same chronological split:
 
 The train split mean and standard deviation are used to normalize validation and test data.
 
-Note: the parquet datasets are large. GitHub does not allow files larger than 100 MB in a normal repository. If these files are not included in the repository, place them in the project root before running the notebooks:
+Note: the parquet datasets are large. GitHub does not allow files larger than 100 MB in a normal repository. If these files are not included in the repository, place them in the project root before running the notebooks, or regenerate them under `DeepLOB_data_process/` and copy the exports to the root as needed:
 
 ```text
 test_Xy.parquet
@@ -107,7 +111,7 @@ git clone https://github.com/eddieeeezz/DeepLOB.git
 cd DeepLOB
 ```
 
-2. Make sure the parquet data files are in the project root.
+2. Prepare or place the parquet data files in the project root (see **Data processing** above).
 
 3. Make sure the trained checkpoints are in `Output_models/`.
 
@@ -123,7 +127,7 @@ jupyter notebook
 DeepLOB_evaluate_trained_models.ipynb
 ```
 
-To retrain models, run the corresponding training notebook first, then rerun the evaluation notebook.
+To retrain models, run the corresponding training notebook under `flow_process/` first, then rerun the evaluation notebook.
 
 ## Evaluation Outputs
 

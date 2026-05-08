@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+
+# Large generated data / checkpoints (regenerate via DeepLOB_data_process scripts)
+*.parquet
+Output_models/*.pth
+
+# Inference / backtest outputs
+backtest_equity_curve*.csv
+backtest_equity_curve*.png
+predictions_*.parquet
